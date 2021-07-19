@@ -1,0 +1,35 @@
+{
+  "name": "node.mongo.gulp",
+  "version": "1.0.0",
+  "description": "work for testing front-end + back-end (Node.js, mongoDB, ExpressJS, gulp)",
+  "main": "gulpfile.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "waldteufelukrnet",
+  "license": "ISC",
+  "dependencies": {
+    "cookie-parser": "~1.4.4",
+    "express": "^4.17.1",
+    "http-errors": "~1.6.3",
+    "mongodb": "^4.0.0",
+    "morgan": "~1.9.1",
+    "pug": "^3.0.2"
+  },
+  "devDependencies": {
+    "browser-sync": "^2.27.4",
+    "debug": "^2.6.9",
+    "del": "^6.0.0",
+    "gulp": "^4.0.2",
+    "gulp-autoprefixer": "^8.0.0",
+    "gulp-concat": "^2.6.1",
+    "gulp-imagemin": "^7.1.0",
+    "gulp-notify": "^4.0.0",
+    "gulp-pug": "^5.0.0",
+    "gulp-rename": "^2.0.0",
+    "gulp-sass": "^5.0.0",
+    "gulp-uglify-es": "^2.0.0",
+    "sass": "^1.35.2",
+    "supervisor": "^0.12.0"
+  }
+}
