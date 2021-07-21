@@ -5,4 +5,32 @@ html
     link(rel='stylesheet', href='css/index.min.css')
     script(defer src='js/index.min.js')
   body
-    h1 Welcome to MENG start page!
+    h1 Список користувачів
+
+    form.userForm(name='userForm')
+      .userForm__inputsGroup
+        input(type='hidden' name='id')
+        label.userForm__label(for='name') Ім'я
+        input.userForm__input(tepe='text' name='name' placeholder="Введіть ім'я")
+        label.userForm__label(for='age') Вік
+        input.userForm__input(type='text' name='age' placeholder="Введіть вік")
+      .userForm__btnsGroup
+        button.userForm__button(type='submit') Зберегти
+        button.userForm__button(type='button') Скинути
+
+    table#clientsTable
+      thead
+        tr
+          th id
+          th Ім'я
+          th Вік
+          th Дії
+
+      tbody
+        //- tr
+        //-   td qq
+        //-   td ww
+        //-   td ee
+        //-   td
+        //-     button.userForm__button(type='button' data-role="change") Змінити
+        //-     button.userForm__button(type='button' data-role="delete") Видалити

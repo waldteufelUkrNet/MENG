@@ -1,26 +1,110 @@
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+const express      = require('express'),
+      MongoClient  = require('mongodb').MongoClient,
+      ObjectId     = require('mongodb').ObjectId,
+      createError  = require('http-errors'),
+      path         = require('path'),
+      jsonparser   = express.json(),
+      port         = '3002',
+      dbUrl        = 'mongodb://localhost:27017/',
+      mongoClient  = new MongoClient(dbUrl);
 
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
+const app          = express();
 
-var app = express();
+////////////////////////////////////////////////////////////////////////////////
+/* ↓↓↓ connect to db ↓↓↓ */
+  let dbClient;
+  mongoClient.connect(function(err, client) {
+    if (err) return console.log(err);
+    dbClient = client;
+    app.locals.collection = client.db("meng").collection("users");
+    app.listen(3002, function(){
+      console.log('server listen on port ' + port)
+    });
+  });
+/* ↑↑↑ /connect to db ↑↑↑ */
+////////////////////////////////////////////////////////////////////////////////
 
 // view engine setup
-app.set('views', path.join(__dirname, 'views'));
+app.set('views', path.join(__dirname, 'templates/'));
 app.set('view engine', 'pug');
 
-app.use(logger('dev'));
-app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+////////////////////////////////////////////////////////////////////////////////
+/* ↓↓↓ work with requests ↓↓↓ */
+  // get all users on startup
+  app.get('/api/users', function(req,res){
+    const collection = req.app.locals.collection;
+    collection.find({}).toArray( function(err,users){
+
+      if (err) return console.log(err);
+      res.send(JSON.stringify(users));
+    });
+  });
+
+  // delete user
+  app.delete('/api/users/:id', function(req,res){
+    const id         = new ObjectId(req.params.id),
+          collection = req.app.locals.collection;
+
+    collection.findOneAndDelete({_id:id}, function(err,result){
+      if(err) return console.log(err);
+
+      let user = result.value;
+      res.send( JSON.stringify(user) );
+    });
+  });
+
+  // get one user
+  app.get('/api/users/:id', function(req,res){
+   const id         = new ObjectId(req.params.id),
+         collection = req.app.locals.collection;
+    collection.findOne({_id: id},function(err,user){
+      if(err) return console.log(err);
+      res.send( JSON.stringify(user) );
+    });
+  });
+
+  // add new user
+  app.post('/api/users', jsonparser, function(req,res){
+    if (!req.body) {
+      res.status(400).send();
+      return;
+    }
+    const user       = req.body,
+          collection = req.app.locals.collection;
+
+    collection.insertOne(user, function(err, result){
+      if(err) return console.log(err);
+      res.send(JSON.stringify(user));
+    });
+  });
+
+  // change user
+  app.put('/api/users/:id', jsonparser, function(req,res){
+    if (!req.body) {
+      res.status(400).send();
+      return;
+    }
+
+    const user       = req.body,
+          id         = new ObjectId(user.id),
+          name       = user.name,
+          age        = user.age,
+          collection = req.app.locals.collection;
+
+    collection.updateOne(
+      {_id: id},
+      {$set: {name: name, age: age} },
+      function(err,result){
+        if (err) throw err;
+        res.send(JSON.stringify(user));
+      }
+    );
+  });
+/* ↑↑↑ /work with requests ↑↑↑ */
+////////////////////////////////////////////////////////////////////////////////
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -39,3 +123,9 @@ app.use(function(err, req, res, next) {
 });
 
 module.exports = app;
+
+// listen for program interruption (ctrl-c)
+process.on("SIGINT", () => {
+  dbClient.close();
+  process.exit();
+});
