@@ -13,6 +13,7 @@ const app          = express();
 ////////////////////////////////////////////////////////////////////////////////
 /* ↓↓↓ connect to db ↓↓↓ */
   let dbClient;
+  // варіант на колбеках
   mongoClient.connect(function(err, client) {
     if (err) return console.log(err);
     dbClient = client;
@@ -21,6 +22,18 @@ const app          = express();
       console.log('server listen on port ' + port)
     });
   });
+
+  // варіант на промісах
+  // async function mongoMain(){
+  //   await mongoClient.connect();
+  //   dbClient = mongoClient;
+  //   app.locals.collection = mongoClient.db("meng").collection("users"); // !!!
+  //   app.listen(3002, function(){
+  //     console.log('server listen on port ' + port)
+  //   });
+  // }
+  // mongoMain()
+  //   .catch(console.error)
 /* ↑↑↑ /connect to db ↑↑↑ */
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -41,6 +54,16 @@ app.use(express.static(path.join(__dirname, 'public')));
       if (err) return console.log(err);
       res.send(JSON.stringify(users));
     });
+
+    // let result = collection.find({}).toArray();
+    // result.then(
+    //   function onResult(users){
+    //     res.send(JSON.stringify(users));
+    //   },
+    //   function onError(error){
+    //     console.log("error", error);
+    //   }
+    // );
   });
 
   // delete user
