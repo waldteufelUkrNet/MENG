@@ -1,6 +1,6 @@
 const express      = require('express'),
       MongoClient  = require('mongodb').MongoClient,
-      ObjectId     = require('mongodb').ObjectId,
+      ObjectId     = require('mongodb').ObjectId, // !!!
       createError  = require('http-errors'),
       path         = require('path'),
       jsonparser   = express.json(),
@@ -16,7 +16,7 @@ const app          = express();
   mongoClient.connect(function(err, client) {
     if (err) return console.log(err);
     dbClient = client;
-    app.locals.collection = client.db("meng").collection("users");
+    app.locals.collection = client.db("meng").collection("users"); // !!!
     app.listen(3002, function(){
       console.log('server listen on port ' + port)
     });
@@ -35,7 +35,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 /* ↓↓↓ work with requests ↓↓↓ */
   // get all users on startup
   app.get('/api/users', function(req,res){
-    const collection = req.app.locals.collection;
+    const collection = req.app.locals.collection; // !!!
     collection.find({}).toArray( function(err,users){
 
       if (err) return console.log(err);
@@ -45,7 +45,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
   // delete user
   app.delete('/api/users/:id', function(req,res){
-    const id         = new ObjectId(req.params.id),
+    const id         = new ObjectId(req.params.id), // !!!
           collection = req.app.locals.collection;
 
     collection.findOneAndDelete({_id:id}, function(err,result){
@@ -58,7 +58,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
   // get one user
   app.get('/api/users/:id', function(req,res){
-   const id         = new ObjectId(req.params.id),
+    const id        = new ObjectId(req.params.id),
          collection = req.app.locals.collection;
     collection.findOne({_id: id},function(err,user){
       if(err) return console.log(err);
