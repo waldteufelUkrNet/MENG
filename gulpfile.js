@@ -26,7 +26,7 @@
   function startBrowserSync() {
     bs.init({
       server : {
-        baseDir : 'app/server/public'
+        baseDir : 'app/client/'
       },
       notify: false // відключення повідомлень browserSync
     });
@@ -34,7 +34,7 @@
   exports.startBrowserSync = startBrowserSync;
 
   // index.pug -> index.html
-  function convertPug(){
+  function convertIndexPug(){
     return src('app/client/index.pug')
            // .pipe(changed('app/', {extension: '.html'}))
            .pipe(pug({
@@ -44,13 +44,28 @@
              message : 'Error: <%= error.message %>',
              title   : 'PUG error'
            }))
-          .pipe( dest('app/server/public/') )
+          .pipe( dest('app/client') )
+  }
+  exports.convertIndexPug = convertIndexPug;
+
+  // pug -> html
+  function convertPug(){
+    return src('app/client/pug/*.pug')
+           // .pipe(changed('app/', {extension: '.html'}))
+           .pipe(pug({
+             pretty : true
+           }))
+           .on('error', notify.onError({
+             message : 'Error: <%= error.message %>',
+             title   : 'PUG error'
+           }))
+          .pipe( dest('app/client/html/') )
   }
   exports.convertPug = convertPug;
 
-  // scss -> css: files
+  // scss -> css
   function convertSCSS() {
-    return src('app/client/scss/index.scss')
+    return src('app/client/scss/main.scss')
            .pipe( scss({outputStyle: 'compressed'}) ) // nested expanded compact compressed
            .on('error', notify.onError({
               message : 'Error: <%= error.message %>',
@@ -61,110 +76,88 @@
               message : 'Error: <%= error.message %>',
               title   : 'Autoprefixer error'
             }))
-           .pipe( rename('index.min.css') )
-           .pipe( dest('app/server/public/css/') )
+           // .pipe( rename('index.min.css') )
+           .pipe( dest('app/client/css/') )
            .pipe( bs.stream() )
   }
   exports.convertSCSS = convertSCSS;
 
-  // js
-  function convertJS() {
-    return src('app/client/js/index.js')
-           .pipe( uglify() )
+  // js modules
+  function convertModulesJS() {
+    return src('app/client/modules/**/*.js')
+           // .pipe( uglify() )
            .on('error', notify.onError({
               message : 'Error: <%= error.message %>',
               title   : 'JS error'
             }))
-           .pipe( rename('index.min.js') )
-           .pipe( dest('app/server/public/js/') )
+           .pipe( concat('modules.js') )
+           .pipe( dest('app/client/js/') )
+           .pipe( bs.stream() )
+  }
+  exports.convertModulesJS = convertModulesJS;
+
+  // js
+  function convertJS() {
+    return src('app/client/js-expanded/*.js')
+           // .pipe( uglify() )
+           .on('error', notify.onError({
+              message : 'Error: <%= error.message %>',
+              title   : 'JS error'
+            }))
+           // .pipe( rename('index.min.js') )
+           .pipe( dest('app/client/js/') )
            .pipe( bs.stream() )
   }
   exports.convertJS = convertJS;
 
+  // front to back
+  function f2b(cb) {
+    // gulp.src('app/assets/pug/*.pug').pipe(pug({pretty : false})).pipe(gulp.dest('dist/'));
+    src('app/client/html/*.html').pipe(dest('app/server/public/html/'));
+    src('app/client/css/*.css').pipe(dest('app/server/public/css/'));
+    src('app/client/fonts/**/*.*').pipe(dest('app/server/public/fonts/'));
+    src('app/client/img/**/*.*').pipe(dest('app/server/public/img/'));
+    src('app/client/js/*.js').pipe(dest('app/server/public/js/'));
+    src('app/client/libs-css/*.{css,scss}').pipe(dest('app/server/public/libs-css/'));
+    src('app/client/libs-js/*.js').pipe(dest('app/server/public/libs-js/'));
+    cb();
+  }
+  exports.f2b = f2b;
+
   // watching & live reload
   function startWatch(){
-    watch(['app/client/index.pug'], convertPug);
-    watch(['app/client/scss/index.scss'], convertSCSS);
-    watch(['app/client/js/index.js'], convertJS );
-    watch(['app/server/public/index.html']).on('change',  bs.reload);
+    watch(['app/client/index.pug'], convertIndexPug);
+    watch(['app/client/pug/*.pug', 'app/client/modules/**/*.pug'], convertPug);
+    watch(['app/client/scss/*.scss', 'app/client/modules/**/*.scss'], convertSCSS);
+    watch(['app/client/modules/**/*.js'], convertModulesJS);
+    watch(['app/client/js-expanded/*.js'], convertJS );
+    watch(['app/client/index.html', 'app/client/html/*.html']).on('change',  bs.reload);
+
+    // copy data from client app to server app
+    watch(['app/client/html/*.html'], function f2b_html() {
+      return src('app/client/html/*.html').pipe(dest('app/server/public/html/'));
+    });
+    watch(['app/client/css/*.css'], function f2b_css() {
+      return src('app/client/css/*.css').pipe(dest('app/server/public/css/'));
+    });
+    watch(['app/client/fonts/**/*.*'], function f2b_fonts() {
+      return src('app/client/fonts/**/*.*').pipe(dest('app/server/public/fonts/'));
+    });
+    watch(['app/client/img/**/*.*'], function f2b_img() {
+      return src('app/client/img/**/*.*').pipe(dest('app/server/public/img/'));
+    });
+    watch(['app/client/js/*.js'], function f2b_js() {
+      return src('app/client/js/*.js').pipe(dest('app/server/public/js/'));
+    });
+    watch(['app/client/libs-css/*.{css,scss}'], function f2b_libs_css() {
+      return src('app/client/libs-css/*.{css,scss}').pipe(dest('app/server/public/libs-css/'));
+    });
+    watch(['app/client/libs-js/*.js'], function f2b_libs_js() {
+      return src('app/client/libs-js/*.js').pipe(dest('app/server/public/libs-js/'));
+    });
   }
   exports.startWatch = startWatch;
 
-  exports.default = series(convertSCSS, convertJS, convertPug, parallel(startBrowserSync, startWatch));
+  exports.default = series(convertSCSS, convertModulesJS, convertJS, convertPug, convertIndexPug, f2b, parallel(startBrowserSync, startWatch));
 /* ↑↑↑ /TASKS ↑↑↑ */
-////////////////////////////////////////////////////////////////////////////////
-/* ↓↓↓ ЩО ДОРОБИТИ ↓↓↓ */
-  // на майбутнє: мініфікація картинок у проміжну теку (з changed), build уже через неї
-
-  // gulp-babel               // ES6 -> ES5
-  // gulp-cache               // бібліотека кешування
-  // gulp-changed             // контроль за змінами у файлах - пропускає потік далі, тільки якщо були зміни у файлі
-  // gulp-concat-css          // склеювання css-файлів
-  // gulp-css-purge           // видалення дублюючого коду css
-  // gulp-cssnano / gulp-csso // мініфікація css-файлів
-  // gulp-load-plugins        // щоб не оголошувати кожну змінну, застосовується для плагінів із префіксом gulp-
-  // gulp-sourcemaps          //
-
-  // задачі
-  // pug, scss, js: index, pages, libs
-  // img
-  // build
-  // fonts
-  // reset
-
-  // function build(){
-  //   return src([...], {base:'app'}).pipe( dest(dest) )
-  // }
-  // exports
-
-  // function callback() {
-  //   console.log('trololo')
-  // }
-
-  // чищення каталогу dist
-  // gulp.task('clean', function(done) {
-  //   return del('dist');
-  //   done();
-  // });
-
-  // обробка зображень
-  // gulp.task('img', function() {
-  //   return gulp.src('app/img/**/*')
-  //     // .pipe(cache(imagemin({
-  //     //   interlaced  : true,
-  //     //   progressive : true,
-  //     //   svgoPlugins : [{removeViewBox: false}],
-  //     //   use         : [pngquant()]
-  //     // })))
-  //     .pipe(gulp.dest('dist/img'));
-  // });
-
-  // очистка кешу
-  // gulp.task('clear', function () {
-  //     return cache.clearAll();
-  // })
-
-  // // перенесення файлів з каталогу app в dist
-  // gulp.task('build', gulp.series(['clean', 'img'], function(done) {
-
-  //   // pug -> html
-  //   gulp.src('app/index.pug').pipe(pug({pretty : false})).pipe(gulp.dest('dist/'));
-  //   gulp.src('app/books/**/*.pug').pipe(pug({pretty : false})).pipe(gulp.dest('dist/books/'));
-
-  //   // fonts
-  //   gulp.src('app/fonts/**/*').pipe(gulp.dest('dist/fonts'));
-
-  //   // js
-  //   // gulp.src('app/js/**/*').pipe(uglify()).pipe(gulp.dest('dist/js/'));
-  //   gulp.src('app/js/**/*').pipe(gulp.dest('dist/js/'));
-
-  //   // css
-  //   gulp.src('app/css/**/*').pipe(csso()).pipe(gulp.dest('dist/css/'));
-
-  //   // img
-  //   gulp.src('app/books/**/*.jpg').pipe(gulp.dest('dist/books/'));
-
-  //   done();
-  // }));
-/* ↑↑↑ /ЩО ДОРОБИТИ ↑↑↑ */
 ////////////////////////////////////////////////////////////////////////////////

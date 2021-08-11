@@ -1,20 +1,31 @@
 {
-  "name": "node.mongo.gulp",
-  "version": "1.0.0",
-  "description": "work for testing front-end + back-end (Node.js, mongoDB, ExpressJS, gulp)",
-  "main": "gulpfile.js",
+  "name": "my_chat",
+  "version": "0.0.1",
+  "description": "web-chat (MENG + Socket.io)",
+  "main": "app/server/app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "waldteufelukrnet",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/waldteufelUkrNet/my_chat.git"
+  },
+  "author": "waldteufel",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/waldteufelUkrNet/my_chat/issues"
+  },
+  "homepage": "https://github.com/waldteufelUkrNet/my_chat#readme",
   "dependencies": {
     "cookie-parser": "~1.4.4",
     "express": "^4.17.1",
+    "helmet": "^4.6.0",
     "http-errors": "~1.6.3",
     "mongodb": "^4.0.0",
     "morgan": "~1.9.1",
-    "pug": "^3.0.2"
+    "nconf": "^0.11.3",
+    "pug": "^3.0.2",
+    "winston": "^3.3.3"
   },
   "devDependencies": {
     "browser-sync": "^2.27.4",
@@ -29,6 +40,7 @@
     "gulp-rename": "^2.0.0",
     "gulp-sass": "^5.0.0",
     "gulp-uglify-es": "^2.0.0",
+    "nodemon": "^2.0.12",
     "sass": "^1.35.2",
     "supervisor": "^0.12.0"
   }
